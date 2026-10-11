@@ -1,0 +1,13 @@
+# Frontend
+node_modules/
+dist/
+.env
+
+# Backend (Spring Boot / Maven)
+target/
+*.class
+.settings/
+.classpath
+.project
+.idea/
+.vscode/
