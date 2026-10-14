@@ -38,19 +38,6 @@ Configuration lives in `backend/src/main/resources/application.properties`
 Point the backend at it (same database name, same table/column names). Existing plain-text passwords
 still work: they are converted to BCrypt hashes automatically on that user's first successful login.
 
-## How the old code maps to the new
-
-| Original | New |
-|---|---|
-| `pojo/*` | `entity/*` (JPA) + `dto/*` (request/response records) |
-| `dao/*`, `daoImpl/*`, `DbUtil` (hand-written JDBC) | `repository/*` (Spring Data JPA) |
-| `service/*`, `serviceImpl/*` | `service/*` (`@Transactional`) |
-| `AuthenticationController` + `AuthFilter` + HttpSession | `AuthController` + `JwtAuthFilter` + `SecurityConfig` |
-| `BookController`, `UserController`, `DashboardController` (`?action=` servlets) | REST controllers below |
-| `jsp/*.jsp` | `frontend/src/pages/*.jsx` |
-| `jsp/includes/header.jsp`, `sidebar.jsp` | `components/Layout.jsx` |
-| `assets/css/*.css` | `frontend/src/styles/*.css` (unchanged) |
-| client-side JS validation in each JSP | same rules in each form + server-side Bean Validation |
 
 ## REST API
 
@@ -74,21 +61,6 @@ All endpoints except login require `Authorization: Bearer <token>`.
 | POST | `/api/issues` | `assignBook` |
 | POST | `/api/issues/{id}/return` | `returnBook` |
 
-## Intentional differences from the original
-
-Things I changed on purpose (all small, all easy to revert):
-
-1. **Passwords are BCrypt-hashed** (original stored plain text). Legacy rows are upgraded on login.
-2. **Only `ADMIN` users can sign in.** The original let any row in `users` log in, but members only ever
-   received a random password nobody could see, so in practice it was admin-only.
-3. **New users' temporary password is shown once** on the Users page after creation. The original generated
-   a random password and discarded it.
-4. **A default admin is created on first run** (the original needed a manual SQL insert).
-5. **Assign/return are single transactions with a row lock** instead of manual "decrement then undo on failure";
-   assigning a book with 0 copies, or returning an already-returned record, is now rejected.
-6. **Editing a book's total copies keeps `available = total − issued`.** The original changed the total only,
-   which could leave the available count wrong.
-7. **Email must be unique** when creating a user.
 8. The **Delete buttons** (books/users) were non-functional placeholders in the original; they are omitted
    rather than ported as dead buttons.
 9. Dates are stored as `DATE` and shown as `dd-MM-yyyy`.
